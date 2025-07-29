@@ -30,42 +30,58 @@ matcapTexture.colorSpace = THREE.SRGBColorSpace
 const fontLoader = new FontLoader()
 const textMaterial = new THREE.MeshMatcapMaterial({ matcap: matcapTexture })
 
+// Text configuration
+const textConfig = {
+    text: 'Hello Three.js'
+}
+
+// GUI controls
+gui.add(textConfig, 'text').name('Text').onChange(() => {
+    createText()
+})
+
+let textMesh = null
+
+let font = null
+
+const createText = () => {
+    if (!font) return
+    
+    if (textMesh) {
+        scene.remove(textMesh)
+        textMesh.geometry.dispose()
+    }
+    
+    const textGeometry = new TextGeometry(
+        textConfig.text,
+        {
+            font: font,
+            size: 0.5,
+            depth: 0.2,
+            curveSegments: 12,
+            bevelEnabled: true,
+            bevelThickness: 0.03,
+            bevelSize: 0.02,
+            bevelOffset: 0,
+            bevelSegments: 5
+        }
+    )
+    textGeometry.computeBoundingBox()
+    textGeometry.center()
+    
+    textMesh = new THREE.Mesh(textGeometry, textMaterial)
+    scene.add(textMesh)
+}
+
 fontLoader.load(
     '/fonts/helvetiker_regular.typeface.json',
-    (font) =>
+    (loadedFont) =>
     {
-        const textGeometry = new TextGeometry(
-            'Hello Three.js',
-            {
-                font: font,
-                size: 0.5,
-                depth: 0.2,
-                curveSegments: 12,
-                bevelEnabled: true,
-                bevelThickness: 0.03,
-                bevelSize: 0.02,
-                bevelOffset: 0,
-                bevelSegments: 5
-            }
-        )
-        textGeometry.computeBoundingBox()
-        textGeometry.center()
-
-//         textGeometry.translate(
-//     - (textGeometry.boundingBox.max.x - 0.02) * 0.5, // Subtract bevel size
-//     - (textGeometry.boundingBox.max.y - 0.02) * 0.5, // Subtract bevel size
-//     - (textGeometry.boundingBox.max.z - 0.03) * 0.5  // Subtract bevel thickness
-// )
-        console.log(textGeometry.boundingBox)
-        
-        const text = new THREE.Mesh(textGeometry, textMaterial)
-        scene.add(text)
+        font = loadedFont
+        createText()
     }
 )
 
-fontLoader.load('/fonts/helvetiker_regular.typeface.json', (font) => {
-    console.log(font)
-})
 
 const donutGeometry = new THREE.TorusGeometry(0.3, 0.2, 20, 45)
 const donutMaterial = new THREE.MeshMatcapMaterial({ matcap: matcapTexture })
