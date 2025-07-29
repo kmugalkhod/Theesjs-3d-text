@@ -32,12 +32,16 @@ const textMaterial = new THREE.MeshMatcapMaterial({ matcap: matcapTexture })
 
 // Text configuration
 const textConfig = {
-    text: 'Hello Three.js'
+    text: 'Hello Three.js',
+    donutsCount: 100
 }
 
 // GUI controls
 gui.add(textConfig, 'text').name('Text').onChange(() => {
     createText()
+})
+gui.add(textConfig, 'donutsCount', 0, 200, 1).name('Donuts Count').onChange(() => {
+    createDonuts()
 })
 
 let textMesh = null
@@ -84,30 +88,62 @@ fontLoader.load(
 
 
 const donutGeometry = new THREE.TorusGeometry(0.3, 0.2, 20, 45)
-const donutMaterial = new THREE.MeshMatcapMaterial({ matcap: matcapTexture })
+let donuts = []
 
-for(let i = 0; i < 100; i++)
-    {
+const createDonuts = () => {
+    // Remove existing donuts
+    donuts.forEach(donut => {
+        scene.remove(donut)
+    })
+    donuts = []
+    
+    // Create new donuts
+    for(let i = 0; i < textConfig.donutsCount; i++) {
         const donut = new THREE.Mesh(donutGeometry, textMaterial)
         
-        // Create a more attractive distribution around the text
-        const angle = Math.random() * Math.PI * 2
-        const radius = Math.random() * 8 + 2 // Distance from center (2-10 units)
-        const height = (Math.random() - 0.5) * 6 // Height variation
+        // Create attractive distribution in layers around the text
+        const layer = Math.floor(i / (textConfig.donutsCount / 3)) // 3 layers
+        const angle = (i * 137.5) * Math.PI / 180 // Golden angle for spiral distribution
         
+        // Different radius ranges for each layer to avoid text overlap
+        let radius
+        if (layer === 0) {
+            radius = Math.random() * 3 + 4 // Inner ring: 4-7 units from center
+        } else if (layer === 1) {
+            radius = Math.random() * 4 + 7 // Middle ring: 7-11 units
+        } else {
+            radius = Math.random() * 5 + 11 // Outer ring: 11-16 units
+        }
+        
+        // Height variation with some clustering
+        const heightCluster = Math.sin(angle * 3) * 2 // Create height waves
+        const height = heightCluster + (Math.random() - 0.5) * 3
+        
+        // Position donuts in 3D space
         donut.position.x = Math.cos(angle) * radius
         donut.position.y = height
-        donut.position.z = Math.sin(angle) * radius - 3 // Keep behind text
+        donut.position.z = Math.sin(angle) * radius
         
+        // Add some depth variation to make it more 3D
+        donut.position.z += (Math.random() - 0.5) * 8
+        
+        // Random rotations
         donut.rotation.x = Math.random() * Math.PI
         donut.rotation.y = Math.random() * Math.PI
         donut.rotation.z = Math.random() * Math.PI
         
-        const scale = Math.random() * 0.8 + 0.3 // Scale between 0.3 and 1.1
+        // Varied scaling based on distance (closer = smaller, farther = larger)
+        const distanceFromCenter = Math.sqrt(donut.position.x ** 2 + donut.position.z ** 2)
+        const scale = Math.random() * 0.5 + 0.3 + (distanceFromCenter * 0.02)
         donut.scale.set(scale, scale, scale)
         
         scene.add(donut)
+        donuts.push(donut)
     }
+}
+
+// Create initial donuts
+createDonuts()
 
 /**
  * Object
